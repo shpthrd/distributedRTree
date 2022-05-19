@@ -14,11 +14,11 @@ import java.io.BufferedReader;
 import java.util.Queue;
 import java.util.concurrent.Semaphore;
 
-class MasterNode{
+class Node{
 	String ip;
 	int rootKey;//o id(key) do RNode raiz
 	int countPoints = 0;//contador de quantos ADDs foram feitos (quantos points tem no sistema)
-
+	String masterIp = "10.0.0.1";
 	static Queue<String> queue = new LinkedList<String>();//queue para produtor e consumidor das requisicoes trabalharem
 	HashMap<Integer, Point> pointMap = new HashMap<Integer, Point>();//KV para os pontos de trajetorias armazenadas no Node, mapeados pelo
 	HashMap<Integer, RNode> rnodeMap = new HashMap<Integer, RNode>();//KV para os RNodes da RTREE armazenadas no Node
@@ -27,17 +27,21 @@ class MasterNode{
 	static Semaphore mutex = new Semaphore(1);//^
 	ServerSocket ss;
 
-	MasterNode(){
+	Node(){
 		this.ip = getHostIp();
+		try{
+			sendMsg("ADN##" + this.ip,masterIp);
+		}catch(Exception e){
+			
+		}
+		
 	}
 
-//===============================================================
-//MasterProducer:
-//O producer no Node Master é quem efetivamente recebe as requisições do processo usuário, 
-//além de receber requisições de outros Nodes
-//===============================================================
-
-	void MasterProducer() throws Exception{
+/*MasterProducer:
+*O producer no Node Master é quem efetivamente recebe as requisições do processo usuário, além de receber requisições de outros Nodes
+*
+*/
+	void Producer() throws Exception{
         System.out.println("Start Producer");
         String code = "";
         while(code != "exit"){
@@ -66,13 +70,7 @@ class MasterNode{
         System.out.println("Producer: fim do while");
     }
 
-//===============================================================
-//MasterConsumer:
-//O consumer fica aguardando ter algo na fila de trabalho para consumir 
-//quando há um comando ele desenfileira e procura a função para atender a requisição
-//===============================================================
-
-	void MasterConsumer() throws Exception{
+	void Consumer() throws Exception{
 		System.out.println("Start Consumer");
 		Thread t = new Thread(new Runnable() {
 			@Override
@@ -109,23 +107,6 @@ class MasterNode{
 					cmd[0] = cmd[0].toUpperCase();
 					try{
 						switch (cmd[0]) {
-							case "ADI": //MASTER| -> ADI##POINT
-								System.out.println("add");
-								addInit("add placeholder");
-								break;
-							
-							case "RTI": //MASTER| INIT OF A RETRIEVE ->
-								retrieveInit();
-								break;
-
-							case "SRI": //MASTER| search init ->
-								searchInit("sri placeholder");
-								break;
-
-							case "ADN": //MASTER| add node -> ADN## NODE IP
-								addNode(cmd[1]);
-								break;
-
 							case "ADD": //segue a lógica de inserção -> ADD##POINT
 								System.out.println("add");
 								addPoint("add placeholder");
@@ -142,7 +123,6 @@ class MasterNode{
 							case "EXIT":
 								System.out.println("Consumer: entrou no case EXIT");
 								code = "exit";
-								spawnExit();
 								break;
 							
 							default:
@@ -157,29 +137,7 @@ class MasterNode{
 		});
 		t.start();
 	}
-
-//===============================================================
-//CONSUMER FUNCTIONS
-//===============================================================
-
-	void addInit(String pointStr){//MASTER
-		//quebrar a str nos numeros e fazer a lógica para o inicio da inserção
-	}
-
-
-	void retrieveInit(){//MASTER
-		//inicia a devolução de todos os nodes começando pelo root e spawnando todos os filhos do root e assim por diante
-	}
 	
-	void searchInit(String areaStr){//MASTER
-		//encontra a area/volume pesquisado e começa a pesquisa pelo root
-	}
-
-	void addNode(String ipStr){
-		nodeList.add(ipStr);
-		System.out.println("node added");
-	}
-
 	void addPoint(String pointStr){
 		//quebrar a str nos numeros e adicionar
 	}
@@ -191,13 +149,6 @@ class MasterNode{
 		//encontra o RNode que está sendo pesquisado e a area de pesquisa e prossegue com a pesquisa
 	}
 
-	void spawnExit(){
-		//mandar msg para todos de EXIT
-	}
-
-//===============================================================
-//AUX FUNCTIONS
-//===============================================================
 	void sendMsg(String msg,String receiverIp) throws Exception{
 		boolean scanning=true;
 		int i = 0;
@@ -255,5 +206,5 @@ class MasterNode{
 		} catch (Exception e) {
 		}
 		return null;
-	}
+	}	
 }

@@ -1,0 +1,5 @@
+métricas:
+
+//buscar aquelas no email
+
++como o sistema responde se eu tiver vários usuários ao mesmo tempo (aumentar o número de users e observar a diferença de resposta pra um volume fixo de requisições e depois aumentar o número de requisições)
