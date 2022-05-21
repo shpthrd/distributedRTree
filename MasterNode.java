@@ -27,8 +27,11 @@ class MasterNode{
 	static Semaphore mutex = new Semaphore(1);//^
 	ServerSocket ss;
 
+
 	MasterNode(){
 		this.ip = getHostIp();
+		rootKey = RandomAux.getKey();
+		rnodeMap.put(rootKey,new RNode(rootKey,this.ip,0,0,0,0,0,0,0,null));
 	}
 
 //===============================================================
@@ -109,9 +112,9 @@ class MasterNode{
 					cmd[0] = cmd[0].toUpperCase();
 					try{
 						switch (cmd[0]) {
-							case "ADI": //MASTER| -> ADI##POINT
+							case "ADI": //MASTER| -> ADI##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
 								System.out.println("add");
-								addInit("add placeholder");
+								addInit(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),Integer.parseInt(cmd[3]),Integer.parseInt(cmd[4]),cmd[5],cmd[6]);
 								break;
 							
 							case "RTI": //MASTER| INIT OF A RETRIEVE ->
@@ -162,8 +165,44 @@ class MasterNode{
 //CONSUMER FUNCTIONS
 //===============================================================
 
-	void addInit(String pointStr){//MASTER
-		//quebrar a str nos numeros e fazer a lógica para o inicio da inserção
+	void addInit(int x, int y, int t,int trajKey, String backward, String userIP){//MASTER
+		//ADI##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
+		// ->
+		RNode root = rnodeMap.get(rootKey);
+		if(root.mbr.volume() == 0){//nada foi inserido ainda
+			Point point = new Point(RandomAux.getKey(),trajKey,this.ip,x,y,t,backward);
+			root.addPoint(point);//como está vazio não precisa de verificação
+			this.pointMap.put(point.key,point);
+			//como foi o primeiro point de todos não precisa avisar o backward
+			try{
+				sendMsg("BCK##" + point.key + "@" + ip,userIP,5000);//PORTA PADRAO PARA RESPONDER APENAS O ADD
+			}catch(Exception e){
+				
+			}
+		}
+		else{//já há algo inserido
+			if(!root.points.isEmpty()){//root é leaf
+				Point point = new Point(RandomAux.getKey(),trajKey,this.ip,x,y,t,backward);
+				root.addPoint(point);
+				this.pointMap.put(point.key,point);
+				if(root.points.size() > Parameters.M){//overflow
+					//criar dois RNodes, um mantem no Master (rnodes.put?)
+					//e o outro verifica-se caso tenha outros nodes no sitema
+					//caso tenha transfere um node
+					//depois da clear na lista points 
+					//e adiciona os dois child na lista children do root
+				}
+				else{//sem overflow
+					String[] backwardRef = backward.split("@");//[0] = key, [1] = IP
+					if(backwardRef[1] == this.ip){//significa que o point anterior está armazenado neste node
+						Point backPoint = this.pointMap.get(backwardRef[0]);
+						backPoint.forwardAddr = point.key + this.ip;//padrão KEY@IP
+					}
+				}
+			}
+		}
+		root.mbr.expand(x,y,t);
+		countPoints++;
 	}
 
 
@@ -198,13 +237,13 @@ class MasterNode{
 //===============================================================
 //AUX FUNCTIONS
 //===============================================================
-	void sendMsg(String msg,String receiverIp) throws Exception{
+	void sendMsg(String msg,String receiverIp, int port) throws Exception{
 		boolean scanning=true;
 		int i = 0;
 		while(scanning) {
 			try {
 				//socketChannel.open(hostname, port);
-				Socket s = new Socket(receiverIp,8000);
+				Socket s = new Socket(receiverIp,port);
 				DataOutputStream dout;
 				dout=new DataOutputStream(s.getOutputStream());
 				dout.writeUTF(msg);

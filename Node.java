@@ -149,13 +149,13 @@ class Node{
 		//encontra o RNode que está sendo pesquisado e a area de pesquisa e prossegue com a pesquisa
 	}
 
-	void sendMsg(String msg,String receiverIp) throws Exception{
+	void sendMsg(String msg,String receiverIp,int port) throws Exception{
 		boolean scanning=true;
 		int i = 0;
 		while(scanning) {
 			try {
 				//socketChannel.open(hostname, port);
-				Socket s = new Socket(receiverIp,8000);
+				Socket s = new Socket(receiverIp,port);
 				DataOutputStream dout;
 				dout=new DataOutputStream(s.getOutputStream());
 				dout.writeUTF(msg);
