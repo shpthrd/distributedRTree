@@ -1,3 +1,4 @@
+import java.lang.Math;
 class Point{
 	int key;
 	int trajKey;
@@ -14,6 +15,10 @@ class Point{
 		this.y = y;
 		this.t = t;
 		this.backwardAddr = backwardAddr;
+	}
+
+	int volume(Point p){
+		return Math.abs((p.x-this.x)*(p.y-this.y)*(p.t-this.t));
 	}
 	
 }

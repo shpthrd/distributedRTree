@@ -80,7 +80,7 @@ class MasterNode{
 		Thread t = new Thread(new Runnable() {
 			@Override
 			public void run(){
-				//System.out.println("starting new thread");//VAI DAR MERDA
+				//System.out.println("starting new thread");
 				String code = "";
 				while(code != "exit"){
 					//System.out.println("Consumer: after while code: "+code);
@@ -129,7 +129,7 @@ class MasterNode{
 								addNode(cmd[1]);
 								break;
 
-							case "ADD": //segue a lógica de inserção -> ADD##POINT
+							case "ADD": //segue a lógica de inserção -> ADD##RNODE KEY##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
 								System.out.println("add");
 								addPoint("add placeholder");
 								break;
@@ -140,6 +140,14 @@ class MasterNode{
 							
 							case "SER": //keep search received to a especific node -> SER##
 								searchArea("ser placeholder");
+								break;
+
+							case "BWU": //BACKWARD UPDATE -> BWU##KEY DO POINT(LÁ)##KEY@IP PARA POR NO FOWARD DO POINT A SER ATUALIZADO (KEY)
+								
+								break;
+							
+							case "TRN": //BACKWARD UPDATE -> BWU##KEY DO POINT(LÁ)##KEY@IP PARA POR NO FOWARD DO POINT A SER ATUALIZADO (KEY)
+								
 								break;
 
 							case "EXIT":
@@ -181,7 +189,7 @@ class MasterNode{
 			}
 		}
 		else{//já há algo inserido
-			if(!root.points.isEmpty()){//root é leaf
+			if(!root.points.isEmpty()){//root é leaf e o point é inserido no root
 				Point point = new Point(RandomAux.getKey(),trajKey,this.ip,x,y,t,backward);
 				root.addPoint(point);
 				this.pointMap.put(point.key,point);
@@ -191,15 +199,154 @@ class MasterNode{
 					//caso tenha transfere um node
 					//depois da clear na lista points 
 					//e adiciona os dois child na lista children do root
+					int volume = -1;
+					int p1Index=0;
+					int p2Index=1;
+					for(int i=0;i < root.points.size()-1;i++){//calcula o volume ponto a ponto para achar a combinação dos dois pontos com maior volume
+						for(int j=i+1;j < root.points.size();j++){
+							int volumeTemp = root.points.get(i).volume(root.points.get(j));
+							if(volumeTemp > volume){
+								volume = volumeTemp;
+								p1Index = i;
+								p2Index = j;
+							}
+						}
+					}
+					RNode r1 = new RNode(RandomAux.getKey(),this.ip,0,0,0,0,0,0,rootKey,this.ip);
+					RNode r2 = new RNode(RandomAux.getKey(),this.ip,0,0,0,0,0,0,rootKey,this.ip);
+					r1.addPoint(root.points.get(p1Index));
+					r2.addPoint(root.points.get(p2Index));
+					for(int i = 0; i<root.points.size();i++){
+						if(i != p1Index && i !=p2Index){
+							int volume1 = r1.points.get(0).volume(root.points.get(i));
+							int volume2 = r2.points.get(0).volume(root.points.get(i));
+							if((volume1 > volume2 && r2.points.size() <= Parameters.M/2) || r1.points.size() > Parameters.M/2){//verificar isso
+								r2.addPoint(root.points.get(i));
+							}
+							else{
+								r1.addPoint(root.points.get(i));
+							}
+						}
+					}
+					r1.adjustMBR();
+					r2.adjustMBR();
+					root.points.clear();
+					root.addChild(r1);
+					this.rnodeMap.put(r1.key,r1);
+					if(nodeList.isEmpty()){//só tem o master
+						root.addChild(r2);
+						this.rnodeMap.put(r2.key,r2);
+					}
+					else{//tem mais algum node, entao tera que decidir para onde vai
+						int choosen = countPoints % nodeList.size() + 1;
+						if(choosen == 0){//o escolhido foi o proprio master
+							root.addChild(r2);
+							this.rnodeMap.put(r2.key,r2);
+						}
+						else{//O ESCOLHIDO EH ALGUM OUTRO NODE
+							r2.nodeIp = nodeList.get(choosen-1);//JÁ ATUALIZANDO O IP DO RNODE PARA A FUNCAO QUE TRANSFERE JA ENVIAR A MSG PARA O IP
+							root.addChild(r2);
+							try{
+								transferRNode(r2);//iMPLEMENTACAO SEM TESTE
+							}catch(Exception e){
+								
+							}
+							
+							if(r2.points.contains(point)){//significa que o ponto inserido foi embora no overflow para outro node
+								if(backward != "null" && backward != "NULL"){
+									String[] backwardRef = backward.split("@");//[0] = key, [1] = IP
+									if(backwardRef[1] == this.ip){//significa que o point anterior está armazenado neste node
+										Point backPoint = this.pointMap.get(Integer.parseInt(backwardRef[0]));
+										backPoint.forwardAddr = point.key + "@" + nodeList.get(choosen-1);//padrão KEY@IP
+									}
+									else{
+										try{
+											sendMsg("BWU##" + backwardRef[0] + "##"+ point.key + "@" + nodeList.get(choosen-1),backwardRef[1],8000);//BACKWARD UPDATE -> BWU##KEY DO POINT(LÁ)##KEY@IP PARA POR NO FOWARD DO POINT A SER ATUALIZADO (KEY)
+										}
+										catch(Exception e){
+											
+										}
+									}
+								}
+							}
+							else{
+								if(backward != "null" && backward != "NULL"){
+									String[] backwardRef = backward.split("@");//[0] = key, [1] = IP
+									if(backwardRef[1] == this.ip){//significa que o point anterior está armazenado neste node
+										Point backPoint = this.pointMap.get(Integer.parseInt(backwardRef[0]));
+										backPoint.forwardAddr = point.key + "@" + this.ip;//padrão KEY@IP
+									}
+									else{
+										try{
+											sendMsg("BWU##" + backwardRef[0] + "##"+ point.key + "@" + this.ip,backwardRef[1],8000);//BACKWARD UPDATE -> BWU##KEY DO POINT(LÁ)##KEY@IP PARA POR NO FOWARD DO POINT A SER ATUALIZADO (KEY)
+										}catch(Exception e){
+
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 				else{//sem overflow
-					String[] backwardRef = backward.split("@");//[0] = key, [1] = IP
-					if(backwardRef[1] == this.ip){//significa que o point anterior está armazenado neste node
-						Point backPoint = this.pointMap.get(backwardRef[0]);
-						backPoint.forwardAddr = point.key + this.ip;//padrão KEY@IP
+					if(backward != "null" && backward != "NULL"){
+						String[] backwardRef = backward.split("@");//[0] = key, [1] = IP
+						if(backwardRef[1] == this.ip){//significa que o point anterior está armazenado neste node
+							Point backPoint = this.pointMap.get(Integer.parseInt(backwardRef[0]));
+							backPoint.forwardAddr = point.key + "@" + this.ip;//padrão KEY@IP
+						}
+						else{
+							try{
+								sendMsg("BWU##" + backwardRef[0] + "##"+ point.key + "@" + this.ip,backwardRef[1],8000);//BACKWARD UPDATE -> BWU##KEY DO POINT(LÁ)##KEY@IP PARA POR NO FOWARD DO POINT A SER ATUALIZADO (KEY)
+							}catch(Exception e){
+
+							}
+						}
 					}
 				}
 			}
+			else{//AQUI É CASO O ROOT NAO É LEAF
+				//
+				boolean end = false;
+				RNode choosenRNode = root;
+				while(!end){
+					int volumeExp = choosenRNode.children.get(0).mbr.expandVolValue(x,y,t);
+					int index = 0;
+					for(int i = 1; i < root.children.size();i++){
+						int volumeTemp = choosenRNode.children.get(i).mbr.expandVolValue(x,y,t);
+						if(volumeTemp < volumeExp){
+							volumeExp = volumeTemp;
+							index = i;
+						}
+					}//ao final deste for será escolhido em qual dos childs sera inserido o point
+					choosenRNode.children.get(index).mbr.expand(x,y,t);
+					if(choosenRNode.children.get(index).nodeIp == this.ip){//significa que este child esta neste mesmo node
+						RNode childRNode = rnodeMap.get(choosenRNode.children.get(index).key);
+						if(childRNode.points.size() == 0){//significa que este child tambem eh non leaf
+							choosenRNode = childRNode;
+						}
+						else{//significa que este child é leaf e será inserido nele o point
+							end = true;
+							Point point = new Point(RandomAux.getKey(),trajKey,this.ip,x,y,t,backward);
+							childRNode.addPoint(point);
+							this.pointMap.put(point.key,point);
+							//fazer a verificacao de OVERFLOW AQUI
+						}
+					}
+					else{//significa que o child escolhido está em outro node e precisa então passar adiante a requisição
+						end = true;
+						try{
+							sendMsg("ADD##",choosenRNode.children.get(index).nodeIp,8000);//ADD##RNODE KEY##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
+							//COMPLETAR AQUI
+						}catch(Exception e){
+
+						}
+						
+					}
+					
+				}
+			}
+
 		}
 		root.mbr.expand(x,y,t);
 		countPoints++;
@@ -275,6 +422,41 @@ class MasterNode{
 				
 			} 
 		}
+	}
+
+
+
+	void transferRNode(RNode r) throws Exception{//este rnode precisa estar com o nodeip já atualizado para onde será transferido
+		sendMsg("TRN##" + r.key + "##" + r.fatherKey + "##" + r.fatherIp + "##" + r.mbr.x1 + "##" + r.mbr.y1 + "##" + r.mbr.t1 + "##" + r.mbr.x2 + "##" + r.mbr.y2 + "##" + r.mbr.t2,r.nodeIp,8000);//TRANSFER RNODE -> TRN##KEY RNODE##KEY FATHER##IP FATHER##X1##Y1##T1##X2##Y2##T2
+		//PRECISA AVISAR O FATHER QUE O NODE FOI TRANSFERIDO
+		if(r.fatherIp == this.ip){//quer dizer que o pai eh daqui
+
+		}
+		else{//o pai eh de outro node
+			sendMsg("UFA##" + r.fatherKey + "##" + r.key + "##" + r.nodeIp,r.fatherIp,8000);//UPDATE FATHER -> UFA##KEY DO FATHER##KEY DO RNODE QUE MUDOU##NOVO IP
+		}
+		
+		if(r.points.size()==0){//non leaf
+			for(int i = 0;i<r.children.size();i++){
+				Child ch = r.children.get(i);
+				sendMsg("TCH##" + ch.key + "##" + ch.mbr.x1 + "##" + ch.mbr.y1 + "##" + ch.mbr.t1 + "##" + ch.mbr.x2 + "##" + ch.mbr.y2 + "##" + ch.mbr.t2,r.nodeIp,8000);//TRANSFER CHILD -> TCH##KEY CHILD##X1##Y1##T1##X2##Y2##T2
+				//AQUI PRECISA ATUALIZAR CADA CHILD PORQUE O FATHER DELES APONTAM PARA UM LUGAR ERRADO
+				if(ch.nodeIp == this.ip){//quer dizer que o child esta aqui neste node
+
+				}
+				else{//o child esta em outro node
+					sendMsg("UCH##" + ch.key + "##" + r.nodeIp,ch.nodeIp,8000);//UPDATE CHILD -> UCH##KEY DO CHILD##NOVO IP DO FATHER DESTE CHILD
+				}
+			}
+		}
+		else{
+			for(int i = 0;i<r.points.size();i++){
+				Point p = r.points.get(i);
+				sendMsg("TPO##" + p.key + "##" + p.x + "##" + p.y + "##" + p.t,r.nodeIp,8000);//TRANSFER POINT -> TPO##KEY POINT##X##Y##T 
+				//*********************************TEM MAIS INFO PRA POR AQUI
+			}
+		}
+
 	}
 
 	String getHostIp(){
