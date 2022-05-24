@@ -50,4 +50,23 @@ class RNode{
 		}
 	}
 
+	void print(){
+		System.out.println("RNode key@ip " + this.key + "@" + this.nodeIp + "| my father key@ip " +  this.fatherKey + "@" +this.fatherIp);
+		System.out.println("MBR(" + this.mbr.x1 + "," + this.mbr.y1 + "," + this.mbr.t1 + ")->(" + this.mbr.x2 + "," + this.mbr.y2 + "," + this.mbr.t2 + ")");
+		if(children.size() != 0){//non leaf
+			System.out.println("Children:");
+			for(int i = 0; i < this.children.size(); i++){
+				System.out.println("Child key@ip " + this.children.get(i).key + "@" + this.children.get(i).nodeIp);
+				System.out.println("MBR(" + this.children.get(i).mbr.x1 + "," + this.children.get(i).mbr.y1 + "," + this.children.get(i).mbr.t1 + ")->(" + this.children.get(i).mbr.x2 + "," + this.children.get(i).mbr.y2 + "," + this.children.get(i).mbr.t2 + ")");
+			}
+		}
+		if(points.size() != 0){
+			System.out.println("Points");
+			for(int i = 0; i < this.points.size(); i++){
+				System.out.println("Point key@trajKey@ip " + this.points.get(i).key + "@" + this.points.get(i).trajKey + "@" + this.points.get(i).nodeIp);
+				System.out.println("MBR(" + this.points.get(i).x + "," + this.points.get(i).y + "," + this.points.get(i).t + ")");
+			}
+		}
+	}
+
 }

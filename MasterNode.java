@@ -146,8 +146,24 @@ class MasterNode{
 								
 								break;
 							
-							case "TRN": //BACKWARD UPDATE -> BWU##KEY DO POINT(LÁ)##KEY@IP PARA POR NO FOWARD DO POINT A SER ATUALIZADO (KEY)
+							case "TRN": //TRANSFER RNODE -> TRN##KEY RNODE##KEY FATHER##IP FATHER##X1##Y1##T1##X2##Y2##T2
 								
+								break;
+
+							case "TCH": //TRANSFER CHILD -> TCH##KEY CHILD##X1##Y1##T1##X2##Y2##T2
+
+								break;
+
+							case "TPO": //TRANSFER POINT -> TPO##KEY POINT##X##Y##T 
+
+								break;
+
+							case "UFA": //UPDATE FATHER -> UFA##KEY DO FATHER##KEY DO RNODE QUE MUDOU##NOVO IP
+
+								break;
+
+							case "UCH": //UPDATE CHILD -> UCH##KEY DO CHILD##NOVO IP DO FATHER DESTE CHILD
+
 								break;
 
 							case "EXIT":
@@ -428,9 +444,15 @@ class MasterNode{
 
 	void transferRNode(RNode r) throws Exception{//este rnode precisa estar com o nodeip já atualizado para onde será transferido
 		sendMsg("TRN##" + r.key + "##" + r.fatherKey + "##" + r.fatherIp + "##" + r.mbr.x1 + "##" + r.mbr.y1 + "##" + r.mbr.t1 + "##" + r.mbr.x2 + "##" + r.mbr.y2 + "##" + r.mbr.t2,r.nodeIp,8000);//TRANSFER RNODE -> TRN##KEY RNODE##KEY FATHER##IP FATHER##X1##Y1##T1##X2##Y2##T2
-		//PRECISA AVISAR O FATHER QUE O NODE FOI TRANSFERIDO
+		//PRECISA AVISAR O FATHER QUE O NODE FOI TRANSFERIDO ok(falta implementar a function em UFA## nao ta chamando ninguem)
 		if(r.fatherIp == this.ip){//quer dizer que o pai eh daqui
-
+			for(int i=0;i < rnodeMap.get(r.fatherKey).children.size();i++){
+				if(rnodeMap.get(r.fatherKey).children.get(i).key == r.key){
+					rnodeMap.get(r.fatherKey).children.get(i).nodeIp = r.nodeIp;
+					i = rnodeMap.get(r.fatherKey).children.size();
+				}
+			}//provavel que vai ter que fazer isso na function UFA##
+			
 		}
 		else{//o pai eh de outro node
 			sendMsg("UFA##" + r.fatherKey + "##" + r.key + "##" + r.nodeIp,r.fatherIp,8000);//UPDATE FATHER -> UFA##KEY DO FATHER##KEY DO RNODE QUE MUDOU##NOVO IP
@@ -440,9 +462,9 @@ class MasterNode{
 			for(int i = 0;i<r.children.size();i++){
 				Child ch = r.children.get(i);
 				sendMsg("TCH##" + ch.key + "##" + ch.mbr.x1 + "##" + ch.mbr.y1 + "##" + ch.mbr.t1 + "##" + ch.mbr.x2 + "##" + ch.mbr.y2 + "##" + ch.mbr.t2,r.nodeIp,8000);//TRANSFER CHILD -> TCH##KEY CHILD##X1##Y1##T1##X2##Y2##T2
-				//AQUI PRECISA ATUALIZAR CADA CHILD PORQUE O FATHER DELES APONTAM PARA UM LUGAR ERRADO
+				//AQUI PRECISA ATUALIZAR O RNODE QUE CADA CHILD PORQUE O FATHER DELES APONTAM PARA UM LUGAR ERRADO
 				if(ch.nodeIp == this.ip){//quer dizer que o child esta aqui neste node
-
+					rnodeMap.get(ch.key).fatherIp = r.nodeIp;
 				}
 				else{//o child esta em outro node
 					sendMsg("UCH##" + ch.key + "##" + r.nodeIp,ch.nodeIp,8000);//UPDATE CHILD -> UCH##KEY DO CHILD##NOVO IP DO FATHER DESTE CHILD
@@ -452,10 +474,11 @@ class MasterNode{
 		else{
 			for(int i = 0;i<r.points.size();i++){
 				Point p = r.points.get(i);
-				sendMsg("TPO##" + p.key + "##" + p.x + "##" + p.y + "##" + p.t,r.nodeIp,8000);//TRANSFER POINT -> TPO##KEY POINT##X##Y##T 
+				sendMsg("TPO##" + p.key + "##" + p.x + "##" + p.y + "##" + p.t,r.nodeIp,8000);//TRANSFER POINT -> TPO##KEY POINT##X##Y##T
 				//*********************************TEM MAIS INFO PRA POR AQUI
 			}
 		}
+		this.rnodeMap.remove(r.key);
 
 	}
 
