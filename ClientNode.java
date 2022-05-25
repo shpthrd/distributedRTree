@@ -122,14 +122,39 @@ class ClientNode{
 		t.start();
 	}
 
-	void auxSpawn(){
-		for(int i = 0; i < 6; i++){
-			//CONTINUAR DAQUI
+	void auxSpawn() throws Exception{
+		sendMsg("ADI##0##0##0##8888##null##"+this.ip,masterIp,8000);//ADI##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
+		ServerSocket addss;
+		String code;
+		addss = new ServerSocket(5000);//padrao a porta 5000 para o add
+		Socket s = addss.accept();
+		DataInputStream din=new DataInputStream(s.getInputStream());
+		code = din.readUTF();
+		din.close(); 
+		s.close(); 
+		addss.close();
+		System.out.println("resp na 5000: " + code);
+		String[] backward = code.split("##");
+		System.out.println("back: " + backward[1]);
+		for(int i = 1; i < 6; i++){//5 iteracoes
+			sendMsg("ADI##"+i+"##"+i+"##"+i+"##8888##"+backward[1]+"##"+this.ip,masterIp,8000);//ADI##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
+			addss = new ServerSocket(5000);//padrao a porta 5000 para o add
+			s = addss.accept();
+			din=new DataInputStream(s.getInputStream());
+			code = din.readUTF();
+			din.close(); 
+			s.close(); 
+			addss.close();
+			System.out.println("resp na 5000: " + code);
+			backward = code.split("##");
+			System.out.println("back: " + backward[1]);
 		}
+		System.out.println("end");
+		this.spawnExit();
 	}
 
-	void spawnExit(){
-
+	void spawnExit() throws Exception{
+		sendMsg("EXIT##0",masterIp,8000);
 	}
 
 	void sendMsg(String msg,String receiverIp, int port) throws Exception{
@@ -145,7 +170,7 @@ class ClientNode{
 				dout.flush();
 				dout.close();
 				s.close();
-				System.out.println("success");
+				System.out.println("SUCCESS| reicever: " + receiverIp + "port: "+ port + " msg: " + msg);
 				try {
 					Thread.sleep(250);// *********** ANALISAR QUANTO TEMPO DEIXAR AQUI DE DELAY
 				} catch (Exception e) {
@@ -154,7 +179,7 @@ class ClientNode{
 				scanning=false;
 			} catch(Exception e) {
 				System.err.println(e);
-				System.out.println("Falha na msg para: " + receiverIp + " msg: " + msg);
+				System.out.println("ERROR| reicever: " + receiverIp + "port: "+ port + " msg: " + msg);
 				if(i>=3){
 					scanning = false;
 					System.out.println("terminating");//se falhar 3 vezes (i>=3) a mensagem é dropada

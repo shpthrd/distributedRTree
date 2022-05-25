@@ -7,8 +7,8 @@ class RNode{
 	String fatherIp;//talvez não seja necessario o mbr do pai (seria até dificil manter a atualização dele)
 	int fatherKey;
 
-	List<Child> children;//provavel que mude para um array de tamanho fixo
-	List<Point> points;//talvez seja o caso de usar a referencia isEmpty pra verificar se é um leaf ou non leaf
+	List<Child> children = new LinkedList<Child>();//provavel que mude para um array de tamanho fixo
+	List<Point> points = new LinkedList<Point>();//talvez seja o caso de usar a referencia isEmpty pra verificar se é um leaf ou non leaf
 	//melhor usar o points/child == null pra ver se é leaf ou não
 	//quando um Rnode for deixar de ser leaf fazer uma iteração para transferir os points e depois usar método de clear da lista
 	RNode(int key,String nodeIp,int x1,int y1,int t1,int x2,int y2,int t2,int fatherKey,String fatherIp){
@@ -64,7 +64,7 @@ class RNode{
 			System.out.println("Points");
 			for(int i = 0; i < this.points.size(); i++){
 				System.out.println("Point key@trajKey@ip " + this.points.get(i).key + "@" + this.points.get(i).trajKey + "@" + this.points.get(i).nodeIp);
-				System.out.println("MBR(" + this.points.get(i).x + "," + this.points.get(i).y + "," + this.points.get(i).t + ")");
+				System.out.println("Coord(" + this.points.get(i).x + "," + this.points.get(i).y + "," + this.points.get(i).t + ")");
 			}
 		}
 	}

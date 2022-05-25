@@ -19,6 +19,7 @@ class MasterNode{
 	int rootKey;//o id(key) do RNode raiz
 	int countPoints = 0;//contador de quantos ADDs foram feitos (quantos points tem no sistema)
 
+	Thread tConsumer;
 	static Queue<String> queue = new LinkedList<String>();//queue para produtor e consumidor das requisicoes trabalharem
 	HashMap<Integer, Point> pointMap = new HashMap<Integer, Point>();//KV para os pontos de trajetorias armazenadas no Node, mapeados pelo
 	HashMap<Integer, RNode> rnodeMap = new HashMap<Integer, RNode>();//KV para os RNodes da RTREE armazenadas no Node
@@ -60,7 +61,8 @@ class MasterNode{
             mutex1.release();
             System.out.println("Producer: after mutex com o code: "+ code);
             //String[] cmd = code.split("##");
-            if(code.startsWith("exit")){
+            if(code.startsWith("exit") || code.startsWith("EXIT")){
+				System.out.println("producer| entrou no startswith do exit");
                 code = "exit";
                 //System.out.println("Producer: entrou no if do exit");
             }
@@ -77,7 +79,8 @@ class MasterNode{
 
 	void MasterConsumer() throws Exception{
 		System.out.println("Start Consumer");
-		Thread t = new Thread(new Runnable() {
+		//Thread t = new Thread(new Runnable() {
+		tConsumer = new Thread(new Runnable() {
 			@Override
 			public void run(){
 				//System.out.println("starting new thread");
@@ -182,7 +185,7 @@ class MasterNode{
 				System.out.println("Consumer: fim do while");
 			}
 		});
-		t.start();
+		tConsumer.start();//t.start();
 	}
 
 //===============================================================
@@ -192,20 +195,26 @@ class MasterNode{
 	void addInit(int x, int y, int t,int trajKey, String backward, String userIP){//MASTER
 		//ADI##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
 		// ->
+		System.out.println("inicio do addInit");
 		RNode root = rnodeMap.get(rootKey);
+		System.out.println("if(root.points.size() && root.children.size())");
+		System.out.println(root.points.size() + " " + root.children.size());
 		if(root.mbr.volume() == 0){//nada foi inserido ainda
+		//if(root.points.isEmpty() && root.children.isEmpty()){//
+			System.out.println("if(root.points.isEmpty() && root.children.isEmpty())");
 			Point point = new Point(RandomAux.getKey(),trajKey,this.ip,x,y,t,backward);
 			root.addPoint(point);//como está vazio não precisa de verificação
 			this.pointMap.put(point.key,point);
 			//como foi o primeiro point de todos não precisa avisar o backward
 			try{
+				System.out.println("sM bck 1");
 				sendMsg("BCK##" + point.key + "@" + ip,userIP,5000);//PORTA PADRAO PARA RESPONDER APENAS O ADD
 			}catch(Exception e){
 				
 			}
 		}
 		else{//já há algo inserido
-			if(!root.points.isEmpty()){//root é leaf e o point é inserido no root
+			if(root.points.size()>0){//root é leaf e o point é inserido no root
 				Point point = new Point(RandomAux.getKey(),trajKey,this.ip,x,y,t,backward);
 				root.addPoint(point);
 				this.pointMap.put(point.key,point);
@@ -271,12 +280,13 @@ class MasterNode{
 							if(r2.points.contains(point)){//significa que o ponto inserido foi embora no overflow para outro node
 								if(backward != "null" && backward != "NULL"){
 									String[] backwardRef = backward.split("@");//[0] = key, [1] = IP
-									if(backwardRef[1] == this.ip){//significa que o point anterior está armazenado neste node
+									if(backwardRef[1].compareTo(this.ip)==0){//significa que o point anterior está armazenado neste node
 										Point backPoint = this.pointMap.get(Integer.parseInt(backwardRef[0]));
 										backPoint.forwardAddr = point.key + "@" + nodeList.get(choosen-1);//padrão KEY@IP
 									}
 									else{
 										try{
+											System.out.println("sM bwu 1");
 											sendMsg("BWU##" + backwardRef[0] + "##"+ point.key + "@" + nodeList.get(choosen-1),backwardRef[1],8000);//BACKWARD UPDATE -> BWU##KEY DO POINT(LÁ)##KEY@IP PARA POR NO FOWARD DO POINT A SER ATUALIZADO (KEY)
 										}
 										catch(Exception e){
@@ -288,12 +298,13 @@ class MasterNode{
 							else{
 								if(backward != "null" && backward != "NULL"){
 									String[] backwardRef = backward.split("@");//[0] = key, [1] = IP
-									if(backwardRef[1] == this.ip){//significa que o point anterior está armazenado neste node
+									if(backwardRef[1].compareTo(this.ip)==0){//significa que o point anterior está armazenado neste node
 										Point backPoint = this.pointMap.get(Integer.parseInt(backwardRef[0]));
 										backPoint.forwardAddr = point.key + "@" + this.ip;//padrão KEY@IP
 									}
 									else{
 										try{
+											System.out.println("sM bwu 2");
 											sendMsg("BWU##" + backwardRef[0] + "##"+ point.key + "@" + this.ip,backwardRef[1],8000);//BACKWARD UPDATE -> BWU##KEY DO POINT(LÁ)##KEY@IP PARA POR NO FOWARD DO POINT A SER ATUALIZADO (KEY)
 										}catch(Exception e){
 
@@ -307,22 +318,35 @@ class MasterNode{
 				else{//sem overflow
 					if(backward != "null" && backward != "NULL"){
 						String[] backwardRef = backward.split("@");//[0] = key, [1] = IP
-						if(backwardRef[1] == this.ip){//significa que o point anterior está armazenado neste node
+						System.out.println("backwardref[1]: "+ backwardRef[1]+" this.ip: "+this.ip);
+						System.out.println("backwardref[1].length(): "+backwardRef[1].length()+" this.ip.length(): "+this.ip.length());
+						//if(backwardRef[1] == this.ip){//significa que o point anterior está armazenado neste node
+						if(backwardRef[1].compareTo(this.ip)==0){
+							System.out.println("entrou aqui no if");
 							Point backPoint = this.pointMap.get(Integer.parseInt(backwardRef[0]));
 							backPoint.forwardAddr = point.key + "@" + this.ip;//padrão KEY@IP
 						}
 						else{
 							try{
+								System.out.println("sM bwu 3");
 								sendMsg("BWU##" + backwardRef[0] + "##"+ point.key + "@" + this.ip,backwardRef[1],8000);//BACKWARD UPDATE -> BWU##KEY DO POINT(LÁ)##KEY@IP PARA POR NO FOWARD DO POINT A SER ATUALIZADO (KEY)
 							}catch(Exception e){
 
 							}
 						}
+						
+						System.out.println("saiu do if else do bwu 3");
+					}
+					try{
+						System.out.println("sM bck ROOT == LEAF SEM OVERFLOW");
+						sendMsg("BCK##" + point.key + "@" + ip,userIP,5000);//PORTA PADRAO PARA RESPONDER APENAS O ADD
+					}catch(Exception e){
+						
 					}
 				}
 			}
 			else{//AQUI É CASO O ROOT NAO É LEAF
-				//
+				System.out.println("caso o root nao eh leaf");
 				boolean end = false;
 				RNode choosenRNode = root;
 				while(!end){
@@ -347,11 +371,13 @@ class MasterNode{
 							childRNode.addPoint(point);
 							this.pointMap.put(point.key,point);
 							//fazer a verificacao de OVERFLOW AQUI
+							//fazer update do backward BWU## e responder para o client o BCK## (ACHO)
 						}
 					}
 					else{//significa que o child escolhido está em outro node e precisa então passar adiante a requisição
 						end = true;
 						try{
+							System.out.println("sM add 1");
 							sendMsg("ADD##",choosenRNode.children.get(index).nodeIp,8000);//ADD##RNODE KEY##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
 							//COMPLETAR AQUI
 						}catch(Exception e){
@@ -364,8 +390,10 @@ class MasterNode{
 			}
 
 		}
+		System.out.println("antes do root.mbr.expand");
 		root.mbr.expand(x,y,t);
 		countPoints++;
+		System.out.println("fim do addinit");
 	}
 
 
@@ -413,7 +441,7 @@ class MasterNode{
 				dout.flush();
 				dout.close();
 				s.close();
-				System.out.println("success");
+				System.out.println("SUCCESS| reicever: " + receiverIp + "port: "+ port + " msg: " + msg);
 				try {
 					Thread.sleep(250);// *********** ANALISAR QUANTO TEMPO DEIXAR AQUI DE DELAY
 				} catch (Exception e) {
@@ -422,7 +450,7 @@ class MasterNode{
 				scanning=false;
 			} catch(Exception e) {
 				System.err.println(e);
-				System.out.println("Falha na msg para: " + receiverIp + " msg: " + msg);
+				System.out.println("ERROR| reicever: " + receiverIp + "port: "+ port + " msg: " + msg);
 				if(i>=3){
 					scanning = false;
 					System.out.println("terminating");//se falhar 3 vezes (i>=3) a mensagem é dropada
