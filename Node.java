@@ -28,9 +28,9 @@ class Node{
 	ServerSocket ss;
 
 	Node(){
-		this.ip = getHostIp();
+		this.ip = Config.getHostIp();
 		try{
-			sendMsg("ADN##" + this.ip,masterIp);
+			Config.sendMsg("ADN##" + this.ip,masterIp,8000);
 		}catch(Exception e){
 			
 		}

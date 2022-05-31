@@ -123,31 +123,9 @@ class ClientNode{
 	}
 
 	void auxSpawn() throws Exception{
-		sendMsg("ADI##0##0##0##8888##null##"+this.ip,masterIp,8000);//ADI##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
-		ServerSocket addss;
-		String code;
-		addss = new ServerSocket(5000);//padrao a porta 5000 para o add
-		Socket s = addss.accept();
-		DataInputStream din=new DataInputStream(s.getInputStream());
-		code = din.readUTF();
-		din.close(); 
-		s.close(); 
-		addss.close();
-		System.out.println("resp na 5000: " + code);
-		String[] backward = code.split("##");
-		System.out.println("back: " + backward[1]);
-		for(int i = 1; i < 6; i++){//5 iteracoes
-			sendMsg("ADI##"+i+"##"+i+"##"+i+"##8888##"+backward[1]+"##"+this.ip,masterIp,8000);//ADI##p.x##p.y##p.t##p.trajKey##p.backwardKey@Ip##user.IP
-			addss = new ServerSocket(5000);//padrao a porta 5000 para o add
-			s = addss.accept();
-			din=new DataInputStream(s.getInputStream());
-			code = din.readUTF();
-			din.close(); 
-			s.close(); 
-			addss.close();
-			System.out.println("resp na 5000: " + code);
-			backward = code.split("##");
-			System.out.println("back: " + backward[1]);
+		//sendMsg("ADI##0##0##0##8888##null##"+this.ip,masterIp,8000);//ADI##p.x##p.y##p.t##p.trajKey
+		for(int i = 0; i < 6; i++){//5 iteracoes
+			sendMsg("ADI##"+i+"##"+i+"##"+i+"##8888",masterIp,8000);//ADI##p.x##p.y##p.t##p.trajKey
 		}
 		System.out.println("end");
 		this.spawnExit();
