@@ -42,6 +42,18 @@ class RNode{
 	int findIndex(int x, int y, int t){//@@@@@@@@@@@@@@@@ iMPLEMENTAR
 		return 0;
 	}
+	int[] splitIndexes(){//@@@@@@@@@@@@@@ IMPLEMENTAR
+		int[] arr = {0,1};
+		return arr;
+	}
+
+	int areaDiff(Point p){//@@@@@@@@@@@@@@ IMPLEMENTAR
+		return 0;
+	}
+
+	int areaDiff(Child ch){//@@@@@@@@@@@@@@ IMPLEMENTAR
+		return 0;
+	}
 
 	int volume(Child rn){
 		int x1 = rn.mbr.x1,y1 = rn.mbr.y1,t1 = rn.mbr.t1,x2 = rn.mbr.x2,y2 = rn.mbr.y2,t2 = rn.mbr.t2;

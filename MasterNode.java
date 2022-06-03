@@ -18,6 +18,7 @@ class MasterNode{
 	String ip;
 	int rootKey;//o id(key) do RNode raiz
 	int countPoints = 0;//contador de quantos ADDs foram feitos (quantos points tem no sistema)
+	int countOverflow = 0;
 
 	Thread tConsumer;
 	static Queue<String> queue = new LinkedList<String>();//queue para produtor e consumidor das requisicoes trabalharem
@@ -225,6 +226,71 @@ class MasterNode{
 
 	void overflow(RNode rnode){
 		//implementar
+		if(rnode.points != null && rnode.points.size() > Config.M){//leaf overflow
+			RNode n1 = new RNode(Config.getKey(),rnode.nodeIp,0,0,0,0,0,0,rnode.fatherKey,rnode.fatherIp);
+			RNode n2 = new RNode(Config.getKey(),rnode.nodeIp,0,0,0,0,0,0,rnode.fatherKey,rnode.fatherIp);
+			int[] indexes = rnode.splitIndexes();//verificar se isso aqui da certo
+			n1.addPoint(rnode.points.get(indexes[0]));
+			n2.addPoint(rnode.points.get(indexes[1]));
+			for(int i = 0 ; i < rnode.points.size(); i++){
+				if(i != indexes[0] && i != indexes[1]){
+					if((n1.points.size() < Config.M/2 && n2.areaDiff(rnode.points.get(i)) > n1.areaDiff(rnode.points.get(i))) || n2.points.size() >= Config.M/2){
+						n1.addPoint(rnode.points.get(i));
+						n1.mbr.expand(rnode.points.get(i));
+					}
+					else{
+						n2.addPoint(rnode.points.get(i));
+						n2.mbr.expand(rnode.points.get(i));
+					}
+				}
+			}
+			this.rnodeMap.put(n1.key,n1);
+			if(this.countOverflow++ % 2 == 0){//verificar isso //fica local
+				this.rnodeMap.put(n2.key,n2);
+			}
+			else{
+				n2.nodeIp = this.getRandomIp();//implementar
+				try{
+					transferRNode(n2);
+				}catch(Exception e){
+
+				}
+			}
+			if(rnode.fatherIp != null){//non root
+				this.rnodeMap.remove(rnode.key);
+				if(rnode.fatherIp == this.ip){//father is here
+					RNode father = this.rnodeMap.get(rnode.fatherKey);
+					int i;
+					for(i = 0 ; i < father.children.size() ; i++){
+						if(rnode.key == father.children.get(i).key){
+							father.children.remove(i);
+							break;
+						}
+					}
+					father.addChild(n1);
+					father.addChild(n2);
+					overflow(father);
+				}
+				else{//father not here
+					try{
+						sendMsg("OVF##",rnode.fatherIp,8000);// @@@@@@@@@@@@ IMPLEMENTAR
+					}catch(Exception e){
+
+					}
+				}
+			}
+			else{//node == root
+				rnode.points.clear();
+				n1.fatherIp = rnode.nodeIp;//é o root, mas vou por assim mesmo
+				n2.fatherIp = rnode.nodeIp;
+				rnode.addChild(n1);
+				rnode.addChild(n2);
+			}
+		}
+	}
+
+	String getRandomIp(){//@@@@@@@@@@@@@@@@@@@ IMPLEMENTAR
+		return "10.0.0.1";
 	}
 
 
@@ -337,7 +403,7 @@ class MasterNode{
 				this.pointMap.remove(p.key);
 			}
 		}
-		this.rnodeMap.remove(r.key);
+		this.rnodeMap.remove(r.key);//verificar isso provavel que precise de um if pra ver se está no map
 
 	}
 

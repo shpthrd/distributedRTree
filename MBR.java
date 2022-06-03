@@ -40,6 +40,16 @@ class MBR{
 		}
 		return dx*dy*dt - this.volume();
 	}
+
+	void expand(Point p){
+		this.expand(p.x,p.y,p.t);
+	}
+
+	void expand(Child ch){
+		this.expand(ch.mbr.x1,ch.mbr.y1,ch.mbr.t1);
+		this.expand(ch.mbr.x2,ch.mbr.y2,ch.mbr.t2);
+	}
+	
 	void expand(int x, int y, int t){
 		if(x >this.x2){
 			this.x2 = x;
