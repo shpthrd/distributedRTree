@@ -30,7 +30,7 @@ class Node{
 	Node(){
 		this.ip = Config.getHostIp();
 		try{
-			Config.sendMsg("ADN##" + this.ip,masterIp,8000);
+			Config.sendMsg("ADN#" + this.ip,masterIp,8000);
 		}catch(Exception e){
 			
 		}
@@ -60,7 +60,7 @@ class Node{
             mutex.release();  //releasing After Production ;
             mutex1.release();
             System.out.println("Producer: after mutex com o code: "+ code);
-            //String[] cmd = code.split("##");
+            //String[] cmd = code.split("#");
             if(code.startsWith("exit")){
                 code = "exit";
                 //System.out.println("Producer: entrou no if do exit");
@@ -103,11 +103,11 @@ class Node{
 						
 					}
 					System.out.println(code);
-					String[] cmd = code.split("##");
+					String[] cmd = code.split("#");
 					cmd[0] = cmd[0].toUpperCase();
 					try{
 						switch (cmd[0]) {
-							case "ADD": //segue a lógica de inserção -> ADD##POINT
+							case "ADD": //segue a lógica de inserção -> ADD#POINT
 								System.out.println("add");
 								addPoint("add placeholder");
 								break;
@@ -116,7 +116,7 @@ class Node{
 								retrieveTree("ret placeholder");
 								break;
 							
-							case "SER": //keep search received to a especific node -> SER##
+							case "SER": //keep search received to a especific node -> SER#
 								searchArea("ser placeholder");
 								break;
 

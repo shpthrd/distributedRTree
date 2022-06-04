@@ -30,7 +30,7 @@ class ClientNode{
 	void ClientProducer() throws Exception{
         System.out.println("Start Producer");
 		mutex.acquire();//APENAS PARA TESTAR COM A FUNÇÃO AUXILIAR PARA GERAR A ADICAO DE ALGUNS ITENS E DEPOIS PROCURA
-        queue.offer("SPA##0");
+        queue.offer("SPA#0");
         mutex.release();  //releasing After Production ;
         mutex1.release();
         String code = "";
@@ -50,7 +50,7 @@ class ClientNode{
             mutex.release();  //releasing After Production ;
             mutex1.release();
             System.out.println("Producer: after mutex com o code: "+ code);
-            //String[] cmd = code.split("##");
+            //String[] cmd = code.split("#");
             if(code.startsWith("exit")){
                 code = "exit";
                 //System.out.println("Producer: entrou no if do exit");
@@ -94,7 +94,7 @@ class ClientNode{
 						
 					}
 					System.out.println(code);
-					String[] cmd = code.split("##");
+					String[] cmd = code.split("#");
 					cmd[0] = cmd[0].toUpperCase();
 					try{
 						switch (cmd[0]) {
@@ -123,16 +123,16 @@ class ClientNode{
 	}
 
 	void auxSpawn() throws Exception{
-		//sendMsg("ADI##0##0##0##8888##null##"+this.ip,masterIp,8000);//ADI##p.x##p.y##p.t##p.trajKey
+		//sendMsg("ADI#0#0#0#8888#null#"+this.ip,masterIp,8000);//ADI#p.x#p.y#p.t#p.trajKey
 		for(int i = 0; i < 6; i++){//5 iteracoes
-			sendMsg("ADI##"+i+"##"+i+"##"+i+"##8888",masterIp,8000);//ADI##p.x##p.y##p.t##p.trajKey
+			sendMsg("ADI#"+i+"#"+i+"#"+i+"#8888",masterIp,8000);//ADI#p.x#p.y#p.t#p.trajKey
 		}
 		System.out.println("end");
 		this.spawnExit();
 	}
 
 	void spawnExit() throws Exception{
-		sendMsg("EXIT##0",masterIp,8000);
+		sendMsg("EXIT#0",masterIp,8000);
 	}
 
 	void sendMsg(String msg,String receiverIp, int port) throws Exception{

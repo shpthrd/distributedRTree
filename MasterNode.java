@@ -61,7 +61,7 @@ class MasterNode{
             mutex.release();  //releasing After Production ;
             mutex1.release();
             System.out.println("Producer: after mutex com o code: "+ code);
-            //String[] cmd = code.split("##");
+            //String[] cmd = code.split("#");
             if(code.startsWith("exit") || code.startsWith("EXIT")){
 				System.out.println("producer| entrou no startswith do exit");
                 code = "exit";
@@ -112,11 +112,11 @@ class MasterNode{
 						
 					}
 					System.out.println(code);
-					String[] cmd = code.split("##");
+					String[] cmd = code.split("#");
 					cmd[0] = cmd[0].toUpperCase();
 					try{
 						switch (cmd[0]) {
-							case "ADI": //MASTER| -> ADI##p.x##p.y##p.t##p.trajKey
+							case "ADI": //MASTER| -> ADI#p.x#p.y#p.t#p.trajKey
 								System.out.println("add init");
 								addInit(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),Integer.parseInt(cmd[3]),Integer.parseInt(cmd[4]));
 								break;
@@ -129,40 +129,48 @@ class MasterNode{
 								searchInit("sri placeholder");
 								break;
 
-							case "ADN": //MASTER| add node -> ADN## NODE IP
+							case "ADN": //MASTER| add node -> ADN# NODE IP
 								addNode(cmd[1]);
 								break;
 
-							case "ADD": //segue a lógica de inserção -> ADD##RNODE KEY##P.KEY##p.trajKey##p.x##p.y##p.t
+							case "ADD": //segue a lógica de inserção -> ADD#RNODE KEY#P.KEY#p.trajKey#p.x#p.y#p.t
 								System.out.println("add");
 								addPoint(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),Integer.parseInt(cmd[3]),Integer.parseInt(cmd[4]),Integer.parseInt(cmd[5]),Integer.parseInt(cmd[6]));
+								break;
+							case "OVF"://update de quando há um overflow que vem de outro node cujo pai está aqui 
+										//-> OVF#1-FATHER.KEY#2-RNODE.KEY
+										//#3-N1.KEY#4-N1.IP#5-N1.X1#6-N1.Y1#7-N1.T1#8-N1.X2#9-N1.Y2#10-N1.T2
+										//#11-N2.KEY#12-N2.IP#13-N2.X1#14-N2.Y1#15-N2.T1#16-NR.X2#17-N2.Y2#18-N2.T2
+									Child n1 = new Child(Integer.parseInt(cmd[3]), cmd[4], Integer.parseInt(cmd[5]), Integer.parseInt(cmd[6]), Integer.parseInt(cmd[7]), Integer.parseInt(cmd[8]), Integer.parseInt(cmd[9]), Integer.parseInt(cmd[10]));
+									Child n2 = new Child(Integer.parseInt(cmd[11]), cmd[12], Integer.parseInt(cmd[13]), Integer.parseInt(cmd[14]), Integer.parseInt(cmd[15]), Integer.parseInt(cmd[16]), Integer.parseInt(cmd[17]), Integer.parseInt(cmd[118]));
+									oveflowUpdate(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),n1,n2);
 								break;
 
 							case "RET": //retrieve item and call the next itens (RNodes or Points) Node
 								retrieveTree("ret placeholder");
 								break;
 							
-							case "SER": //keep search received to a especific node -> SER##
+							case "SER": //keep search received to a especific node -> SER#
 								searchArea("ser placeholder");
 								break;
 							
-							case "TRN": //TRANSFER RNODE -> TRN##KEY RNODE##KEY FATHER##IP FATHER##X1##Y1##T1##X2##Y2##T2
+							case "TRN": //TRANSFER RNODE -> TRN#KEY RNODE#KEY FATHER#IP FATHER#X1#Y1#T1#X2#Y2#T2
 								
 								break;
 
-							case "TCH": //TRANSFER CHILD -> TCH##KEY CHILD##X1##Y1##T1##X2##Y2##T2
+							case "TCH": //TRANSFER CHILD -> TCH#KEY CHILD#X1#Y1#T1#X2#Y2#T2
 
 								break;
 
-							case "TPO": //TRANSFER POINT -> TPO##KEY POINT##KEY TRAJ##X##Y##T 
+							case "TPO": //TRANSFER POINT -> TPO#KEY POINT#KEY TRAJ#X#Y#T 
 
 								break;
 
-							case "UFA": //UPDATE FATHER -> UFA##KEY DO FATHER##KEY DO RNODE QUE MUDOU##NOVO IP
+							case "UFA": //UPDATE FATHER -> UFA#KEY DO FATHER#KEY DO RNODE QUE MUDOU#NOVO IP
 
 								break;
 
-							case "UCH": //UPDATE CHILD -> UCH##KEY DO CHILD##NOVO IP DO FATHER DESTE CHILD
+							case "UCH": //UPDATE CHILD -> UCH#KEY DO CHILD#NOVO IP DO FATHER DESTE CHILD
 
 								break;
 
@@ -190,13 +198,13 @@ class MasterNode{
 //===============================================================
 
 	void addInit(int x, int y, int t,int trajKey){//MASTER
-		//ADI##p.x##p.y##p.t##p.trajKey
+		//ADI#p.x#p.y#p.t#p.trajKey
 		System.out.println("inicio do addInit");
 		addPoint(rootKey, Config.getKey(), trajKey,x,y,t);
 		
 	}
 	void addPoint(int rnodeKey,int pointKey,int trajKey,int x,int y,int t){
-		//segue a lógica de inserção -> ADD##RNODE KEY##P.KEY##p.trajKey##p.x##p.y##p.t
+		//segue a lógica de inserção -> ADD#RNODE KEY#P.KEY#p.trajKey#p.x#p.y#p.t
 		System.out.println("inicio do addPoint");
 		Point p = new Point(pointKey,trajKey,this.ip,x,y,t);
 		boolean end = false;
@@ -214,7 +222,7 @@ class MasterNode{
 				if(rnode.nodeIp != this.ip){//this rnode is stored in another Node
 					end = true;
 					try{
-						sendMsg("ADD##",rnode.nodeIp,8000);//@@@@@@@@@@@@@@@@@@@@COMPLETAR
+						sendMsg("ADD#",rnode.nodeIp,8000);//@@@@@@@@@@@@@@@@@@@@COMPLETAR
 					}catch(Exception e){
 						
 					}
@@ -273,7 +281,7 @@ class MasterNode{
 				}
 				else{//father not here
 					try{
-						sendMsg("OVF##",rnode.fatherIp,8000);// @@@@@@@@@@@@ IMPLEMENTAR
+						sendMsg("OVF#",rnode.fatherIp,8000);// @@@@@@@@@@@@ IMPLEMENTAR
 					}catch(Exception e){
 
 					}
@@ -289,6 +297,21 @@ class MasterNode{
 		}
 	}
 
+	void oveflowUpdate(int fatherKey,int childKey,Child n1,Child n2){
+		RNode father = this.rnodeMap.get(fatherKey);
+		int i;
+		for(i = 0 ; i < father.children.size() ; i++){
+			if(rnode.key == father.children.get(i).key){
+				father.children.remove(i);
+				break;
+			}
+		}
+		father.children.remove(i);
+		father.addChild(n1);
+		father.addChild(n2);
+		overflow(father);
+	}
+
 	String getRandomIp(){//@@@@@@@@@@@@@@@@@@@ IMPLEMENTAR
 		return "10.0.0.1";
 	}
@@ -302,7 +325,7 @@ class MasterNode{
 		//encontra a area/volume pesquisado e começa a pesquisa pelo root
 	}
 
-	void addNode(String ipStr){ //ADD##RNODE KEY##P.KEY##p.trajKey##p.x##p.y##p.t
+	void addNode(String ipStr){ //ADD#RNODE KEY#P.KEY#p.trajKey#p.x#p.y#p.t
 		nodeList.add(ipStr);
 		System.out.println("node added");
 	}
@@ -366,31 +389,31 @@ class MasterNode{
 
 
 	void transferRNode(RNode r) throws Exception{//este rnode precisa estar com o nodeip já atualizado para onde será transferido
-		sendMsg("TRN##" + r.key + "##" + r.fatherKey + "##" + r.fatherIp + "##" + r.mbr.x1 + "##" + r.mbr.y1 + "##" + r.mbr.t1 + "##" + r.mbr.x2 + "##" + r.mbr.y2 + "##" + r.mbr.t2,r.nodeIp,8000);//TRANSFER RNODE -> TRN##KEY RNODE##KEY FATHER##IP FATHER##X1##Y1##T1##X2##Y2##T2
-		//PRECISA AVISAR O FATHER QUE O NODE FOI TRANSFERIDO ok(falta implementar a function em UFA## nao ta chamando ninguem)
+		sendMsg("TRN#" + r.key + "#" + r.fatherKey + "#" + r.fatherIp + "#" + r.mbr.x1 + "#" + r.mbr.y1 + "#" + r.mbr.t1 + "#" + r.mbr.x2 + "#" + r.mbr.y2 + "#" + r.mbr.t2,r.nodeIp,8000);//TRANSFER RNODE -> TRN#KEY RNODE#KEY FATHER#IP FATHER#X1#Y1#T1#X2#Y2#T2
+		//PRECISA AVISAR O FATHER QUE O NODE FOI TRANSFERIDO ok(falta implementar a function em UFA# nao ta chamando ninguem)
 		if(r.fatherIp == this.ip){//quer dizer que o pai eh daqui
 			for(int i=0;i < rnodeMap.get(r.fatherKey).children.size();i++){
 				if(rnodeMap.get(r.fatherKey).children.get(i).key == r.key){
 					rnodeMap.get(r.fatherKey).children.get(i).nodeIp = r.nodeIp;
 					i = rnodeMap.get(r.fatherKey).children.size();
 				}
-			}//provavel que vai ter que fazer isso na function UFA##
+			}//provavel que vai ter que fazer isso na function UFA#
 			
 		}
 		else{//o pai eh de outro node
-			sendMsg("UFA##" + r.fatherKey + "##" + r.key + "##" + r.nodeIp,r.fatherIp,8000);//UPDATE FATHER -> UFA##KEY DO FATHER##KEY DO RNODE QUE MUDOU##NOVO IP
+			sendMsg("UFA#" + r.fatherKey + "#" + r.key + "#" + r.nodeIp,r.fatherIp,8000);//UPDATE FATHER -> UFA#KEY DO FATHER#KEY DO RNODE QUE MUDOU#NOVO IP
 		}
 		
 		if(r.points.size()==0){//non leaf
 			for(int i = 0;i<r.children.size();i++){
 				Child ch = r.children.get(i);
-				sendMsg("TCH##" + ch.key + "##" + ch.mbr.x1 + "##" + ch.mbr.y1 + "##" + ch.mbr.t1 + "##" + ch.mbr.x2 + "##" + ch.mbr.y2 + "##" + ch.mbr.t2,r.nodeIp,8000);//TRANSFER CHILD -> TCH##KEY CHILD##X1##Y1##T1##X2##Y2##T2
+				sendMsg("TCH#" + ch.key + "#" + ch.mbr.x1 + "#" + ch.mbr.y1 + "#" + ch.mbr.t1 + "#" + ch.mbr.x2 + "#" + ch.mbr.y2 + "#" + ch.mbr.t2,r.nodeIp,8000);//TRANSFER CHILD -> TCH#KEY CHILD#X1#Y1#T1#X2#Y2#T2
 				//DONE:AQUI PRECISA ATUALIZAR O RNODE QUE CADA CHILD REPRESENTA PORQUE O FATHER DELES APONTAM PARA UM LUGAR ERRADO
 				if(ch.nodeIp == this.ip){//quer dizer que o child esta aqui neste node
 					rnodeMap.get(ch.key).fatherIp = r.nodeIp;
 				}
 				else{//o child esta em outro node
-					sendMsg("UCH##" + ch.key + "##" + r.nodeIp,ch.nodeIp,8000);//UPDATE CHILD -> UCH##KEY DO CHILD##NOVO IP DO FATHER DESTE CHILD
+					sendMsg("UCH#" + ch.key + "#" + r.nodeIp,ch.nodeIp,8000);//UPDATE CHILD -> UCH#KEY DO CHILD#NOVO IP DO FATHER DESTE CHILD
 				}
 
 			}
@@ -398,7 +421,7 @@ class MasterNode{
 		else{//leaf
 			for(int i = 0;i<r.points.size();i++){
 				Point p = r.points.get(i);
-				sendMsg("TPO##" + p.key + "##" + p.trajKey + "##" + p.x + "##" + p.y + "##" + p.t,r.nodeIp,8000);//TRANSFER POINT -> TPO##KEY POINT##KEY TRAJ##X##Y##T
+				sendMsg("TPO#" + p.key + "#" + p.trajKey + "#" + p.x + "#" + p.y + "#" + p.t,r.nodeIp,8000);//TRANSFER POINT -> TPO#KEY POINT#KEY TRAJ#X#Y#T
 				//DONE: NAO SEI SE TA CERTO
 				this.pointMap.remove(p.key);
 			}

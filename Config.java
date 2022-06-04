@@ -17,7 +17,7 @@ class Config{
 	static Random random = new Random();
 	
 	static int getKey(){
-        return random.nextInt(100000);
+        return random.nextInt(1000000);//UM MILHAO, DEPOIS VAI AUMENTAR
     }
 
 	static void sendMsg(String msg,String receiverIp, int port) throws Exception{
