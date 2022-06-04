@@ -301,7 +301,7 @@ class MasterNode{
 		RNode father = this.rnodeMap.get(fatherKey);
 		int i;
 		for(i = 0 ; i < father.children.size() ; i++){
-			if(rnode.key == father.children.get(i).key){
+			if(childKey == father.children.get(i).key){
 				father.children.remove(i);
 				break;
 			}
