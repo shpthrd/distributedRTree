@@ -39,8 +39,17 @@ class RNode{
 
 	}
 
-	int findIndex(int x, int y, int t){//@@@@@@@@@@@@@@@@ iMPLEMENTAR
-		return 0;
+	int findIndex(int x, int y, int t){//@@@@@@@@@@@@@@@@ iMPLEMENTAR ok -> testar
+		int volume = this.volume(x, y, t, 0);
+		int index = 0;
+		for(int i = 1; i < this.children.size();i++){
+			int tempVolume = this.volume(x, y, t, i);
+			if(tempVolume < volume){
+				volume = tempVolume;
+				index = i;
+			}
+		}
+		return index;
 	}
 	int[] splitIndexes(){//@@@@@@@@@@@@@@ IMPLEMENTAR
 		int[] arr = {0,1};
@@ -53,6 +62,47 @@ class RNode{
 
 	int areaDiff(Child ch){//@@@@@@@@@@@@@@ IMPLEMENTAR
 		return 0;
+	}
+
+	int volume(){
+		return Math.abs((this.mbr.x2-this.mbr.y2) * (this.mbr.y2-this.mbr.y1) * (this.mbr.t2-this.mbr.t1)); 
+	}
+
+	int volume(int x,int y,int t, int i){
+		if(x > this.children.get(i).mbr.x2){
+			x = x - this.children.get(i).mbr.x1;
+		}
+		else{
+			if(x < this.children.get(i).mbr.x1){
+				x = this.children.get(i).mbr.x2 - x;
+			}
+			else{
+				x = this.children.get(i).mbr.x2- this.children.get(i).mbr.x1;
+			}
+		}
+		if(y > this.children.get(i).mbr.y2){
+			y = y - this.children.get(i).mbr.y1;
+		}
+		else{
+			if(y < this.children.get(i).mbr.y1){
+				y = this.children.get(i).mbr.y2 - y;
+			}
+			else{
+				y = this.children.get(i).mbr.y2- this.children.get(i).mbr.y1;
+			}
+		}
+		if(t > this.children.get(i).mbr.t2){
+			t = t - this.children.get(i).mbr.t1;
+		}
+		else{
+			if(t < this.children.get(i).mbr.t1){
+				t = this.children.get(i).mbr.t2 - t;
+			}
+			else{
+				t = this.children.get(i).mbr.t2- this.children.get(i).mbr.t1;
+			}
+		}
+		return x * y * t;
 	}
 
 	int volume(Child rn){

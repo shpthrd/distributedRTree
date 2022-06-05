@@ -203,29 +203,31 @@ class MasterNode{
 		addPoint(rootKey, Config.getKey(), trajKey,x,y,t);
 		
 	}
-	void addPoint(int rnodeKey,int pointKey,int trajKey,int x,int y,int t){
-		//segue a lógica de inserção -> ADD#RNODE KEY#P.KEY#p.trajKey#p.x#p.y#p.t
+	void addPoint(int rnodeKey,int pointKey,int trajKey,int x,int y,int t){//ADD#RNODE KEY#P.KEY#p.trajKey#p.x#p.y#p.t
 		System.out.println("inicio do addPoint");
-		Point p = new Point(pointKey,trajKey,this.ip,x,y,t);
 		boolean end = false;
 		RNode rnode = rnodeMap.get(rnodeKey);
 		while(!end){
 			rnode.mbr.expand(x,y,t);
-			if(rnode.children.size() < 1){//node == leaf
+			if(rnode.children.isEmpty()){//node == leaf
+				Point p = new Point(pointKey,trajKey,this.ip,x,y,t);
 				rnode.addPoint(p);
+				pointMap.put(p.key,p);
 				end = true;
-				overflow(rnode);//@@@@@@@@@@@@@IMPLEMENTAR
+				overflow(rnode);//@@@@@@@@@@@@@IMPLEMENTAR - ok -> aux functions
 			}
 			else{//non leaf
-				int i = rnode.findIndex(x,y,t);//@@@@@@@@@@@implementar
-				rnode = rnodeMap.get(rnode.children.get(i).key);
-				if(rnode.nodeIp != this.ip){//this rnode is stored in another Node
+				int i = rnode.findIndex(x,y,t);//@@@@@@@@@@@implementar ok -> testar
+				if(rnode.children.get(i).nodeIp != this.ip){//this rnode is stored in another Node
 					end = true;
 					try{
-						sendMsg("ADD#",rnode.nodeIp,8000);//@@@@@@@@@@@@@@@@@@@@COMPLETAR
+						sendMsg("ADD#"+rnode.children.get(i).key+"#"+pointKey+"#"+trajKey+"#"+x+"#"+y+"#"+t,rnode.children.get(i).nodeIp,8000);//ADD#RNODE KEY#P.KEY#p.trajKey#p.x#p.y#p.t
 					}catch(Exception e){
 						
 					}
+				}
+				else{//rnode escolhido é local
+					rnode = rnodeMap.get(rnode.children.get(i).key);
 				}
 			}
 
@@ -237,7 +239,7 @@ class MasterNode{
 		if(rnode.points != null && rnode.points.size() > Config.M){//leaf overflow
 			RNode n1 = new RNode(Config.getKey(),rnode.nodeIp,0,0,0,0,0,0,rnode.fatherKey,rnode.fatherIp);
 			RNode n2 = new RNode(Config.getKey(),rnode.nodeIp,0,0,0,0,0,0,rnode.fatherKey,rnode.fatherIp);
-			int[] indexes = rnode.splitIndexes();//verificar se isso aqui da certo
+			int[] indexes = rnode.splitIndexes();//@@@@@@@@@@@@@IMPLEMENTAR
 			n1.addPoint(rnode.points.get(indexes[0]));
 			n2.addPoint(rnode.points.get(indexes[1]));
 			for(int i = 0 ; i < rnode.points.size(); i++){
@@ -253,7 +255,7 @@ class MasterNode{
 				}
 			}
 			this.rnodeMap.put(n1.key,n1);
-			if(this.countOverflow++ % 2 == 0){//verificar isso //fica local
+			if(this.countOverflow++ % 2 == 0 || this.nodeList.isEmpty()){//verificar isso //fica local
 				this.rnodeMap.put(n2.key,n2);
 			}
 			else{
@@ -281,7 +283,13 @@ class MasterNode{
 				}
 				else{//father not here
 					try{
-						sendMsg("OVF#",rnode.fatherIp,8000);// @@@@@@@@@@@@ IMPLEMENTAR
+						//update de quando há um overflow que vem de outro node cujo pai está aqui 
+						//-> OVF#1-FATHER.KEY#2-RNODE.KEY
+						//#3-N1.KEY#4-N1.IP#5-N1.X1#6-N1.Y1#7-N1.T1#8-N1.X2#9-N1.Y2#10-N1.T2
+						//#11-N2.KEY#12-N2.IP#13-N2.X1#14-N2.Y1#15-N2.T1#16-NR.X2#17-N2.Y2#18-N2.T2
+						sendMsg("OVF#"+rnode.fatherKey+"#"+rnode.key+"#"+n1.key+"#"+n1.nodeIp
+							+"#"+n1.mbr.x1+"#"+n1.mbr.y1+"#"+n1.mbr.t1+"#"+n1.mbr.x2+"#"+n1.mbr.y2+"#"+n1.mbr.t2+"#"
+							+n2.key+"#"+n2.nodeIp+"#"+n2.mbr.x1+"#"+n2.mbr.y1+"#"+n2.mbr.t1+"#"+n2.mbr.x2+"#"+n2.mbr.y2+"#"+n2.mbr.t2,rnode.fatherIp,8000);
 					}catch(Exception e){
 
 					}
@@ -294,6 +302,9 @@ class MasterNode{
 				rnode.addChild(n1);
 				rnode.addChild(n2);
 			}
+		}
+		else if(rnode.children != null && rnode.children.size() > Config.M){//ver se funciona esse else if//non leaf overflow
+			//@@@@@@@@@@@@@@@implementar
 		}
 	}
 
@@ -325,9 +336,9 @@ class MasterNode{
 		//encontra a area/volume pesquisado e começa a pesquisa pelo root
 	}
 
-	void addNode(String ipStr){ //ADD#RNODE KEY#P.KEY#p.trajKey#p.x#p.y#p.t
+	void addNode(String ipStr){
 		nodeList.add(ipStr);
-		System.out.println("node added");
+		System.out.println("node added: " +ipStr);
 	}
 
 	
