@@ -51,21 +51,131 @@ class RNode{
 		}
 		return index;
 	}
-	int[] splitIndexes(){//@@@@@@@@@@@@@@ IMPLEMENTAR
+	int[] splitIndexes(){//tanto para leaf quanto para non leaf //@@@@@@@@@@@@@@@@@@@@@@TESTAR
 		int[] arr = {0,1};
+		int volume = -1;
+		int i,j;
+		if(this.points.isEmpty()){//non leaf
+			for(i = 0;i < this.children.size()-1; i++){//aqui está quadratica, pode ser linear
+				for(j = i; j < this.children.size();j++){
+					int tempVolume,x1,y1,t1,x2,y2,t2;
+					if(this.children.get(i).mbr.x1 < this.children.get(j).mbr.x1){
+						x1 = this.children.get(i).mbr.x1;
+					}
+					else{
+						x1 = this.children.get(j).mbr.x1;
+					}
+					if(this.children.get(i).mbr.y1 < this.children.get(j).mbr.y1){
+						y1 = this.children.get(i).mbr.y1;
+					}
+					else{
+						y1 = this.children.get(j).mbr.y1;
+					}
+					if(this.children.get(i).mbr.t1 < this.children.get(j).mbr.t1){
+						t1 = this.children.get(i).mbr.t1;
+					}
+					else{
+						t1 = this.children.get(j).mbr.t1;
+					}
+					if(this.children.get(i).mbr.x2 < this.children.get(j).mbr.x2){
+						x2 = this.children.get(i).mbr.x2;
+					}
+					else{
+						x2 = this.children.get(j).mbr.x2;
+					}
+					if(this.children.get(i).mbr.y2 < this.children.get(j).mbr.y2){
+						y2 = this.children.get(i).mbr.y2;
+					}
+					else{
+						y2 = this.children.get(j).mbr.y2;
+					}
+					if(this.children.get(i).mbr.t2 < this.children.get(j).mbr.t2){
+						t2 = this.children.get(i).mbr.t2;
+					}
+					else{
+						t2 = this.children.get(j).mbr.t2;
+					}
+					tempVolume = (x2 - x1) * (y2 - y1) * (t2 - t1);
+					if(tempVolume > volume){
+						volume = tempVolume;
+						arr[0] = i;
+						arr[1] = j;
+					}
+				}
+			}
+		}
+		else{//leaf
+			for(i = 0;i < this.points.size()-1; i++){//aqui está quadratica, pode ser linear
+				for(j = i; j < this.points.size();j++){
+					int tempVolume = Math.abs( (this.points.get(i).x - this.points.get(j).x) * (this.points.get(i).y - this.points.get(j).y) * (this.points.get(i).t - this.points.get(j).t) );
+					if(tempVolume > volume){
+						volume = tempVolume;
+						arr[0] = i;
+						arr[1] = j;
+					}
+				}
+			}
+		}
 		return arr;
 	}
 
-	int areaDiff(Point p){//@@@@@@@@@@@@@@ IMPLEMENTAR
-		return 0;
+	int areaDiff(Point p){//diferença da area expandida com o ponto e da area original
+		int x1,y1,t1,x2,y2,t2;
+		if(p.x < this.mbr.x1){
+			x1 = p.x;
+			x2 = this.mbr.x2;
+		}
+		else{
+			if(p.x > this.mbr.x2){
+				x1 = this.mbr.x1;
+				x2 = p.x;
+			}
+			else{
+				x1 = this.mbr.x1;
+				x2 = this.mbr.x2;
+			}
+		}
+		if(p.y < this.mbr.y1){
+			y1 = p.y;
+			y2 = this.mbr.y2;
+		}
+		else{
+			if(p.y > this.mbr.y2){
+				y1 = this.mbr.y1;
+				y2 = p.y;
+			}
+			else{
+				y1 = this.mbr.y1;
+				y2 = this.mbr.y2;
+			}
+		}
+		if(p.t < this.mbr.t1){
+			t1 = p.t;
+			t2 = this.mbr.t2;
+		}
+		else{
+			if(p.t > this.mbr.t2){
+				t1 = this.mbr.t1;
+				t2 = p.t;
+			}
+			else{
+				t1 = this.mbr.t1;
+				t2 = this.mbr.t2;
+			}
+		}
+		return Math.abs(((x2-x1) * (y2-y1) * (t2-t1))) - this.volume();
 	}
 
 	int areaDiff(Child ch){//@@@@@@@@@@@@@@ IMPLEMENTAR
+		int x1,y1,t1,x2,y2,t2;
+		if(ch.mbr.x1 < this.mbr.x1){
+			x1 = ch.mbr.x1;
+		}
 		return 0;
 	}
 
 	int volume(){
-		return Math.abs((this.mbr.x2-this.mbr.y2) * (this.mbr.y2-this.mbr.y1) * (this.mbr.t2-this.mbr.t1)); 
+		return Math.abs((this.mbr.x2-this.mbr.x1) * (this.mbr.y2-this.mbr.y1) * (this.mbr.t2-this.mbr.t1)); 
 	}
 
 	int volume(int x,int y,int t, int i){
